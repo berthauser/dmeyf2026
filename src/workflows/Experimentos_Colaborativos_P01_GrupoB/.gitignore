@@ -1,0 +1,4 @@
+# El .gitignore de la catedra excluye *.md (salvo README).
+# Aca la documentacion ES parte de la entrega: el Anexo pide los
+# scripts y como correrlos, y las bitacoras registran cada corrida.
+!*.md
