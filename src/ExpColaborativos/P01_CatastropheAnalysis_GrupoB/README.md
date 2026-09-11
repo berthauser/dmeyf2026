@@ -7,6 +7,64 @@ Ernesto A. Zapata Icart · Grupo B · `future = 202107` · entrega **martes 15-s
 
 ---
 
+## Estrategia de trabajo
+
+El experimento se armó siguiendo cinco reglas, y todas dejaron rastro en los
+archivos de esta carpeta.
+
+**1. Un solo generador, no cinco notebooks editados a mano.**
+Los cinco brazos salen del mismo script a partir del
+`z611_WorkFlow_01_gerencial_grupoB.ipynb` de la cátedra. El *ceteris paribus*
+—que entre brazos sólo cambie la celda 25— queda garantizado por construcción y
+no por cuidado manual. Editar cinco notebooks a mano habría hecho imposible
+demostrar que el resto es idéntico.
+
+**2. Probar en seco antes de gastar Colab.**
+Cada bloque nuevo de R se corrió primero en Docker (`entorno-ds:1.0`, R 4.6.1)
+sobre un dataset sintético que imita la estructura del gerencial, extrayendo las
+celdas **reales** de los notebooks generados. Ahí aparecieron los errores que
+habrían costado 40 minutos de Colab cada uno: la interpolación tomando meses
+vecinos equivocados, el `dfinal_train` reutilizado entre semillas, el flag que
+tenía que crearse antes del FE histórico. La sección *Verificación local* de
+abajo detalla qué se probó.
+
+**3. Declarar antes de mirar.**
+Los cuatro contrastes se escribieron **antes** de la primera corrida. Y cuando a
+mitad del experimento apareció una pista prometedora —que el brazo `NA` era mucho
+más estable— se registró como predicción secundaria con A2, A3 y A4 todavía sin
+correr, con fecha, en `bitacora/CONTRASTE_1_A1_vs_A0.md`. Las dos fallaron y las
+dos están reportadas.
+
+**4. Una bitácora por corrida, escrita antes y después.**
+Cada brazo tiene su archivo en `bitacora/` con los valores que se esperaban de
+cada verificación **antes** de correr, los resultados obtenidos, y las
+incidencias. Es lo que permite distinguir un resultado de una casualidad, y lo
+que hizo evidente que la corrida más alta y la más baja del experimento salieron
+de la misma semilla.
+
+**5. Corregirse por escrito.**
+Hay al menos tres correcciones registradas: reportar la **mediana** y no la media
+de las diferencias pareadas (el Wilcoxon es un test de rangos); corregir por
+**multiplicidad** un hallazgo de varianza que se veía en `p = 0.015` y terminó en
+`p = 0.173`; y descartar la idea de que los brazos que señalan son más estables
+cuando A4 la contradijo. Ninguna de las tres mejora el resultado. Están porque
+sin ellas el trabajo diría algo que los datos no sostienen.
+
+### Herramientas
+
+R y LightGBM sobre Google Colab, con la modalidad Gerencial del workflow de la
+cátedra. Docker con R local para las pruebas en seco. Git y GitHub para el
+versionado.
+
+El trabajo se hizo **con asistencia de un LLM** (Claude), usado para generar y
+depurar el código de los cinco brazos, correr los tests estadísticos y redactar
+esta documentación. Las decisiones experimentales —elegir H2 entre las tres
+hipótesis, agregar el quinto brazo, qué declarar de antemano, qué reportar y qué
+descartar— se tomaron y se discutieron caso por caso, y varias de ellas
+cambiaron sobre la marcha: están registradas con fecha en las bitácoras.
+
+---
+
 ## Orden de ejecución
 
 | # | notebook | cuándo | dura |
