@@ -1,0 +1,3 @@
+# El .gitignore de la raiz excluye *.md; acá la documentación
+# de la entrega tiene que viajar con el código.
+!*.md
