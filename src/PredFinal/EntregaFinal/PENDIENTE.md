@@ -541,3 +541,49 @@ UTN 2026 virtual mgr**.
       para que el semillerío tenga evidencia propia y no sólo una decisión
       razonada. Son otros 11 submits de los 20 diarios.
 - [ ] **Antes del 20-sep 23:59:59: elegir a mano en Kaggle el submit que compite.**
+
+---
+
+# Reproducibilidad — probada el 2026-09-17
+
+El notebook **no era reproducible**, y se demostró con un diseño controlado: dos
+pares de corridas del mismo notebook en sesiones y VMs distintas.
+
+| desempate del rank | par | resultado |
+|---|---|---|
+| `ties.method = "random"` | 7190 vs 7191 | **20 AUC distintos**; el ganador del Grid Search se dio vuelta de `(256, 64, 1228)` a `(128, 64, 350)` |
+| `ties.method = "average"` | 7290 vs 7291 | **idénticos**: `(256, 64, 246)`, AUC `0.9459258` |
+
+La causa era `frank(..., ties.method = "random")` en `drift_rank_cero_fijo`, que
+consume azar del RNG de R sin `set.seed` previo. Era la **única** fuente de azar
+sin fijar: `azar` tiene su `set.seed` y LightGBM tiene `seed` + `deterministic` +
+`num_threads`.
+
+`dtrain: 15876` y `dfinal_train: 192651` reprodujeron en las cuatro corridas —
+nunca dependieron del RNG del rank.
+
+**Hallazgo colateral, y es el más interesante.** Lo que el Grid Search intenta
+discriminar entre sus mejores combinaciones es un rango de AUC de **0.0019**; lo
+que el ruido de desempate movía a la **misma** combinación entre corridas era
+**0.0025**. El ruido de reproducibilidad era mayor que la señal buscada: el Grid
+Search estaba eligiendo ruido. Es la tesis del Problema 01 —el ruido se come al
+efecto— reapareciendo en otra etapa del workflow, medida sin buscarla.
+
+## Cómo cuenta la nota — leído del PDF
+
+- **La nota sale del Private Leaderboard**, normalizado a [0,10] entre los
+  estudiantes de la modalidad (pág. 14).
+- La partición es **Public ≈ 30 % / Private ≈ 70 %** (`804/1149 = 69.97 %`,
+  pág. 45). Todo lo medido hasta acá sale de menos de un tercio del test.
+- El PDF avisa que el mismo submit da ganancias muy distintas en Public y Private,
+  "simplemente por la varianza de la distribución binomial".
+- **La consigna dice explícitamente que no hay que elegir el máximo del Public**:
+  *"el alumno elegirá el modelo que a pesar de no ser el de más ganancia en el
+  Public Leaderboard, a su entender es el que más ganancia obtendrá en el
+  privado"* (pág. 49).
+- **Si no se elige nada, Kaggle elige el máximo del Public** (§5.6.1, pág. 51).
+- §5 exige que los profesores regeneren **exactamente el archivo elegido**, y si
+  tienen inquietudes el alumno pasa a **evaluación oral individual** (pág. 14).
+
+**Consecuencia:** sólo es elegible un submit de una corrida reproducible, o sea
+con `ties.method` determinista. Hay que elegir a mano, sin excepción.
