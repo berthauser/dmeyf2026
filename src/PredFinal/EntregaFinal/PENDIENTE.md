@@ -346,6 +346,33 @@ Queda a decidir el 17 o 18, según cuánto tarde la corrida base.
 Ojo con el último punto: si no se elige el submit manualmente, Kaggle toma el que
 él quiera, no el mejor.
 
+
+**Ajuste durante la corrida del 2026-09-17: `training_pct` 0.01 -> 0.08.**
+
+El `cat()` de control dio **3.475 filas de 179.449** con `0.01`. Demasiado poco:
+la grilla busca `min_data_in_leaf` hasta 2048, que con 3.475 filas obliga a que
+cada hoja tenga más de la mitad del dataset — el árbol no puede partir y la mitad
+de las 20 combinaciones quedan degeneradas.
+
+La causa es la asimetría ya anotada: el Grupo B midió **14.373 de 779.565** sobre
+el dataset Junior (29 meses de training). El Gerencial tiene 14 meses y 53
+columnas, así que el mismo 1 % da **cuatro veces menos filas**. Su hallazgo fue
+"no hay punto de ruptura **hasta** 14.373 filas"; con 3.475 se estaba operando
+**por debajo del piso que probaron**.
+
+Lo que se replica es el **tamaño absoluto**, que es lo que ve el árbol, no el
+porcentaje:
+
+```
+(14.373 − 1.681 BAJAs) / (179.449 − 1.681) = 0.0714  ->  se usa 0.08
+```
+
+Resultado: **15.876 filas**, por encima del piso validado por B y aun así 11 veces
+menos que las 179.449 del original.
+
+**Nota de reproducibilidad:** el valor `0.08` hay que dejarlo en el notebook del
+repo. La corrida se hizo con ese valor, no con `0.01`.
+
 ---
 
 ## Experimento propio — semillerío (PDF §6.15)
@@ -412,3 +439,105 @@ submits ni ensuciar el leaderboard. Pensada para la corrida de prueba.
 7. Recién después: las 5 semillas y `submit <- TRUE`.
 8. **Antes del 20-sep 23:59:59, elegir a mano en Kaggle** cuál de los submits
    compite.
+
+---
+
+# Corrida definitiva — 2026-09-17
+
+Una sola sesión de Colab, de punta a punta, sin errores.
+
+## Cifras del pipeline
+
+| etapa | resultado |
+|---|---|
+| dataset tras CA + baseline + Experimento 2 | **53 columnas** |
+| tras FE histórico (50 lagueables × 4) | **253 columnas** |
+| `campos_buenos` | 252 |
+| `dtrain` (Grid Search, `training_pct` 0.08) | **15.876** de 179.449 |
+| `dfinal_train` | **192.651** filas · 12,1× el `dtrain` |
+| `dfuture` (202109) | 13.242 clientes |
+
+## Grid Search — 20 combinaciones, ~8 minutos
+
+Ganador: **`num_leaves = 256`, `min_data_in_leaf = 64`, `num_iterations = 1228`**,
+AUC en validation **0.9467925**.
+
+Los dos primeros coinciden con los del T4 del Problema 01. `num_iterations` no:
+1228 contra 428, efecto del `dtrain` más chico sobre el early stopping.
+
+**Hallazgo — la grilla se degeneró en 15 de 20 combinaciones.** Para
+`min_data_in_leaf >= 256`, las cuatro filas de `num_leaves` dan AUC y `niter`
+idénticos hasta el séptimo decimal. Con 15.876 filas, `min_data_in_leaf` topa
+antes: a 256 el árbol llega como máximo a `15.876/256 ≈ 62` hojas, y el mínimo de
+la grilla de `num_leaves` es 64, así que nunca es la restricción activa. En el
+nivel ganador (`min_data_in_leaf = 64`) sí discrimina —0.9449 / 0.9466 / 0.9468 /
+0.9468— y por eso el resultado es utilizable.
+
+`min_data_in_leaf = 64` volvió a caer en el **borde inferior** de la grilla, igual
+que en el Problema 01: el óptimo podría estar fuera de lo explorado.
+
+## Semillerío — 10 semillas, 41 minutos
+
+```r
+PARAM$semillerio <- c(100043, 200063, 300089, 500069, 700021,
+                      181219, 410341, 568723, 618347, 831781)
+```
+Tomadas en el orden registrado de antemano, no elegidas por resultado. Las
+primeras siete son las del Problema 01. ~4:10 por semilla.
+
+**El promedio comprimió los extremos**, que es la firma de un ensemble que hace
+algo:
+
+| | 1 semilla | 10 semillas |
+|---|---|---|
+| min | 1.70e-07 | **3.42e-07** |
+| media | 0.002519 | 0.002432 |
+| max | 0.8887 | **0.8623** |
+
+Si los diez modelos coincidieran, el rango no se movería. Es evidencia directa,
+obtenida de la propia corrida, de que las semillas producen modelos distintos.
+
+## Importancia de variables — las dos decisiones funcionaron
+
+| # | variable | Gain | origen |
+|---|---|---|---|
+| **1** | **`z_ctrx_quarter`** | **0.0994** | Experimento 2 (#03) |
+| 2 | `ctrx_quarter` | 0.0352 | original |
+| 3 | `ratio_ctrx_quarter_sobre_mprestamos_personales_z` | 0.0176 | #03 |
+| 4 | `ratio_ctrx_quarter_sobre_cliente_edad` | 0.0165 | #03 |
+| 5 | `mcaja_ahorro_rank` | 0.0164 | `rank_cero_fijo` (#02) |
+| 6 | `mcuenta_corriente_rank` | 0.0156 | #02 |
+
+**`z_ctrx_quarter` gana por 2,8× a `ctrx_quarter`**, la misma variable sin
+estandarizar, compitiendo dentro del mismo modelo. Es la validación más limpia
+posible de la tesis del Grupo B en el #03, y reproduce su propia tabla, donde esa
+variable aparecía con 100 % de frecuencia.
+
+Del #03 entran 8 variables al top 30, 4 de ellas al top 10. Del #02, cinco `_rank`
+al top 20. Y se **componen entre etapas**:
+`ratio_mcuenta_corriente_sobre_mprestamos_personales_z_lag1` y
+`mrentabilidad_annual_rank_delta2` son features del #03 y del #02 que después pasó
+a laguear y deltear el FE histórico.
+
+**Observación honesta:** `numero_de_cliente` quedó en el puesto 8. Está en
+`campos_buenos` por diseño de la cátedra —el `setdiff` sólo saca
+`clase_ternaria`, `clase01` y `azar`—, igual que `foto_mes`, que ya se declaró
+como limitación en el Problema 01. Que un identificador aporte Gain significa que
+el modelo lee antigüedad codificada en el número. Se registra; no se cambia a
+cuatro días del cierre.
+
+## Submits
+
+11 archivos (`KA7190_800` a `KA7190_1300`), los once **Successfully submitted to
+UTN 2026 virtual mgr**.
+
+## Pendiente
+
+- [ ] Subir el notebook a GitHub **desde Colab**, para que el repo tenga lo que
+      realmente corrió (`training_pct = 0.08`, 10 semillas, `submit = TRUE`).
+      Lo exige §5: los profesores tienen que regenerar el submit exacto.
+- [ ] Mirar el Public Leaderboard y ver qué corte rindió mejor.
+- [ ] Opcional: correr la misma configuración con **una sola semilla** y comparar,
+      para que el semillerío tenga evidencia propia y no sólo una decisión
+      razonada. Son otros 11 submits de los 20 diarios.
+- [ ] **Antes del 20-sep 23:59:59: elegir a mano en Kaggle el submit que compite.**
