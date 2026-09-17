@@ -587,3 +587,75 @@ efecto— reapareciendo en otra etapa del workflow, medida sin buscarla.
 
 **Consecuencia:** sólo es elegible un submit de una corrida reproducible, o sea
 con `ties.method` determinista. Hay que elegir a mano, sin excepción.
+
+---
+
+# El 2x2 de semillas x desempate — 2026-09-17
+
+Cuatro corridas, midiendo la **media de los 11 cortes** en el Public Leaderboard:
+
+| | `ties = random` | `ties = average` |
+|---|---|---|
+| **1 semilla** | 7191: **20.631** | 7291: **18.072** |
+| **10 semillas** | 7190: **21.161** | 7290: **17.693** |
+
+| efecto | magnitud |
+|---|---|
+| desempate (`random` − `average`) | **+3.01** |
+| semillerío (10 − 1 semilla) | **+0.08** |
+
+**Cuál replica.** El efecto del desempate se midió dos veces —**+2.56** con una
+semilla y **+3.47** con diez—: mismo signo, magnitud parecida. El del semillerío
+también dos veces —**+0.53** con `random` y **−0.38** con `average`—: **signos
+opuestos**, indistinguible de cero.
+
+## El experimento propio (§6.15) dio nulo
+
+El semillerío **no mueve la ganancia media**. Tercer nulo de la materia, junto con
+H2 en el Catastrophe Analysis y el desbalanceo del Problema 11.
+
+**Pero hay un efecto que sí replica, en la dispersión:**
+
+| corrida | desvío entre los 11 cortes |
+|---|---|
+| 7190 · 10 semillas | **1.881** |
+| 7191 · 1 semilla | 5.529 |
+| 7290 · 10 semillas | **1.259** |
+| 7291 · 1 semilla | 2.082 |
+
+En los dos pares el semillerío deja la curva **a la mitad de dispersión**. No da
+más ganancia: da una ganancia que **depende menos de dónde se corte**. Con el
+Private invisible y un solo corte para elegir, eso vale.
+
+Misma forma que el hallazgo del Problema 01 —nulo en la media, efecto en la
+dispersión—, con una diferencia a favor: allá se cayó bajo corrección por
+multiplicidad, acá replica en los dos pares. **Advertencia honesta:** los 11
+cortes son subconjuntos anidados del mismo ranking, no observaciones
+independientes; ese desvío no es una varianza en sentido estadístico.
+
+## Por qué `"average"` costaba 3 puntos — medido
+
+Prueba en seco sobre `entorno-ds:1.0`, con una columna monetaria de mucha masa
+repetida:
+
+```
+first     valores distintos: 2383
+average   valores distintos:   13
+random    valores distintos: 2383
+
+misma llamada dos veces en la misma sesion:
+  first     identico: TRUE
+  average   identico: TRUE
+  random    identico: FALSE
+
+dos sesiones distintas, data.table con 8 hilos:
+  first     mismo resultado
+```
+
+`"average"` colapsa la columna a **13 valores distintos**: el árbol casi no puede
+partir sobre ella. Ése es el mecanismo de la pérdida.
+
+**Versión final adoptada: `ties.method = "first"`.** Reparte rangos distintos como
+`"random"` pero sin consumir azar, y aguanta los 8 hilos de data.table. El orden
+de filas queda fijado por el `setorder(dataset, numero_de_cliente, foto_mes)` que
+corre antes. Corrida **7390**, 10 semillas.
