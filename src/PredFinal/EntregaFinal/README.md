@@ -222,7 +222,7 @@ que la reproducibilidad es, en palabras del `UTN_DMEYF_2026.pdf`,
 
 ---
 
-## Por qué 950 envíos
+## Por qué el corte en 950 envíos (estímulos)
 
 La consigna (`UTN_DMEYF_2026.pdf`, §5.6) advierte que el submit elegido no
 debería ser el de mayor ganancia Public. Se eligió por robustez, no por pico:
