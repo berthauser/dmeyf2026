@@ -659,3 +659,88 @@ partir sobre ella. Ése es el mecanismo de la pérdida.
 `"random"` pero sin consumir azar, y aguanta los 8 hilos de data.table. El orden
 de filas queda fijado por el `setorder(dataset, numero_de_cliente, foto_mes)` que
 corre antes. Corrida **7390**, 10 semillas.
+
+---
+
+# Corrida 7390 y decisión — 2026-09-17, noche
+
+`ties.method = "first"`, 10 semillas. Grid: `128 · 64 · 716`. Semillerío 26 min.
+
+## Las cinco corridas
+
+| corrida | semillas | `ties` | `niter` | **media de los 11** | desvío | ¿reproducible? |
+|---|:--:|---|---|---|---|:--:|
+| 7190 | 10 | random | 1228 | **21.161** | 1.88 | **no** |
+| 7191 | 1 | random | 350 | 20.631 | 5.53 | **no** |
+| 7290 | 10 | average | 246 | 17.693 | 1.26 | sí |
+| 7291 | 1 | average | 246 | 18.072 | 2.08 | sí |
+| **7390** | **10** | **first** | **716** | **18.640** | **1.68** | **sí** |
+
+**`"first"` recuperó un tercio del camino**, no todo. Los 2383 valores distintos
+contra los 13 de `"average"` ayudaron —18.64 contra 17.69— pero no trajeron de
+vuelta los 21 del par `random`. Los empates colapsados no eran toda la
+explicación.
+
+Conjetura no medida: con `"first"` los rangos dentro de cada grupo empatado se
+asignan en orden de `numero_de_cliente`, que es lo que fija el `setorder`. Eso
+introduce una correlación sistemática con esa variable —la número 8 en
+importancia—; `"random"` no la introduce.
+
+**Advertencia honesta que hay que mantener en el README:** con el ruido del Public
+medido —hasta **5.2 puntos** entre cortes que comparten el 95 % de sus
+predicciones— no está establecido que estas diferencias de 2 o 3 puntos entre
+medias sean reales. Las once lecturas de cada corrida están fuertemente
+correlacionadas y no hay un error estándar confiable.
+
+## La decisión: elegir de la 7390
+
+Sólo **7290, 7291 y 7390** son elegibles, porque son las únicas reproducibles y §5
+exige regenerar *exactamente el archivo elegido*. De las tres, 7390 tiene la media
+más alta.
+
+7190 y 7191 puntúan mejor pero elegirlas implica entregar un notebook que no puede
+regenerar su propio resultado: se cambiarían ~2.5 puntos de una métrica que sale
+del **30 %** del test y se mueve ±5 por azar, a cambio de incumplir lo que el PDF
+llama *"parte de la filosofía de la materia"* y que puede derivar en **evaluación
+oral individual**.
+
+## Qué corte — la 7390 suavizada con media móvil de 3
+
+```
+ 850  19.405
+ 900  19.460   <- maximo suavizado
+ 950  19.349
+1000  19.210
+1050  17.878
+1100  16.573   <- el peor
+1150  17.406
+1200  18.266
+```
+
+Zona robusta: **850–950**. Converge con algo independiente: el óptimo medido en el
+Problema 01 sobre 202107 fue **936 envíos**.
+
+**Recomendado: `KA7390_950`** — score crudo más alto de la zona (20.570), a 14
+envíos del óptimo local medido, y valor suavizado prácticamente igual al de 900.
+`KA7390_900` es igual de defendible.
+
+**Descartado `KA7390_1200`** (20.404): pico sin sostén, su vecino de 1150 es el
+peor de la curva (15.240). Mismo patrón que el 1050 de la 7190.
+
+---
+
+# Pendiente para el 2026-09-18
+
+- [ ] **Guardar la corrida 7390 en GitHub desde Colab**, con la ruta
+      `src/PredFinal/EntregaFinal/719_final_gerencial.ipynb`. Se corrió en modo
+      playground: si se cerró la pestaña sin guardar, las 21 salidas se perdieron
+      y hay que rehacerla.
+- [ ] **Re-correr 7390 hasta `cod 27` solamente** (~20 min, sin submits) y
+      verificar que dé otra vez `128 · 64 · 716`. Es la prueba empírica de que el
+      notebook entregado reproduce; de `"first"` sólo está probado el determinismo
+      en el test de Docker, no en el notebook real.
+- [ ] **Seleccionar a mano en Kaggle `KA7390_950`.** Si no se elige nada, Kaggle
+      toma el máximo del Public, que hoy es `KA7191_1200` — de una corrida de una
+      sola semilla y **no reproducible**. El peor de los mundos.
+- [ ] Escribir el README de la entrega, reemplazando este archivo.
+- [ ] **Cierre: domingo 20-sep 23:59:59.**
