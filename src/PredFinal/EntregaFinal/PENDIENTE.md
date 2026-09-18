@@ -744,3 +744,26 @@ peor de la curva (15.240). Mismo patrón que el 1050 de la 7190.
       sola semilla y **no reproducible**. El peor de los mundos.
 - [ ] Escribir el README de la entrega, reemplazando este archivo.
 - [ ] **Cierre: domingo 20-sep 23:59:59.**
+
+---
+
+# Reproducibilidad del notebook entregado — VERIFICADA el 2026-09-18
+
+Se volvió a correr `719_final_gerencial.ipynb` hasta `cod 27`, en una sesión nueva,
+y dio:
+
+```
+cod 20   dtrain: 15876 filas de 179449 posibles
+cod 27   num_leaves 128 · min_data_in_leaf 64 · num_iterations 716
+```
+
+**Idéntico a la corrida 7390.** De `ties.method = "first"` sólo estaba probado el
+determinismo en el test de Docker; ahora está probado sobre el notebook real.
+
+Con esto el requisito del PDF §5 —que los profesores puedan correr los scripts y
+generar exactamente el archivo subido a Kaggle— queda cumplido **con evidencia
+propia**, no con una afirmación.
+
+También se quitó la celda del badge "Open in Colab" que Colab inserta sola: el
+notebook vuelve a tener 84 celdas y los índices citados en esta documentación
+apuntan a las celdas correctas.
