@@ -73,10 +73,10 @@ con Wilcoxon + Bonferroni. Se eligió el de B por dos razones:
 
 1. **El cara a cara.** B midió `rank_cero_fijo` > `estandarizar` en **10/10
    semillas** — el peor rival que enfrentaron. Contra el resto ganan 9/10.
-2. **La implementación.** `drift_estandarizar` de la cátedra tiene un bug fatal:
+2. **La implementación.** En `drift_estandarizar` me pareció encontrar un bug:
    `mean(campo)` en vez de `mean(get(campo))`, o sea le pasa el *nombre* de la
    columna a `mean()`, que devuelve `NA`; como después borra la columna original,
-   deja **todas las variables monetarias en `NA`**. `drift_rank_cero_fijo` usa
+   eso deja **todas las variables monetarias en `NA`**. `drift_rank_cero_fijo` usa
    `frank(get(campo))` correctamente. El 10/10 de B es lo que uno esperaría si
    ese código se corrió sin corregir.
 
@@ -187,8 +187,9 @@ Se sigue a A porque es el único que puso el trade-off en números y su veredict
 "ínfima". Hay una sola corrida disponible y un Grid Search de 50 minutos por
 delante.
 
-**Bug en el código de A:** define `roll_window <- 3` pero después usa
-`frollmean(x, n = w, ...)`, y `w` no existe — tira `object 'w' not found`. El
+**Un detalle en el código de A:** define `roll_window <- 3` pero después usa
+`frollmean(x, n = w, ...)`, y `w` no aparece definido — eso tiraría
+`object 'w' not found`. El
 fragmento de la lámina no se corrió tal como está. **El de B sí está bien
 escrito** (`frollmean(.SD, n = 3, align = "right", fill = NA, na.rm = TRUE)`); es
 la versión a usar si alguna vez se agrega el rolling mean.

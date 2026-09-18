@@ -18,8 +18,9 @@ Elegido **manualmente** en Kaggle. La competencia permite un solo submit final.
 
 > El Public Leaderboard muestra 27.066, que es el máximo histórico de la cuenta y
 > corresponde a `KA7191_1200`, de una corrida anterior. Eso es el comportamiento
-> que describe el PDF §5.5: Kaggle siempre muestra el máximo del usuario, sin
-> importar qué esté seleccionado. **El submit elegido es el 950 de la 7390.**
+> que describe el PDF de la cátedra (`UTN_DMEYF_2026.pdf`, §5.5): Kaggle siempre
+> muestra el máximo del usuario, sin importar qué esté seleccionado.
+> **El submit elegido es el 950 de la 7390.**
 
 ---
 
@@ -32,7 +33,7 @@ Correr `719_final_gerencial.ipynb` completo, en Google Colab. Deja en
 El notebook trae las salidas de la corrida real, así que se puede verificar sin
 ejecutarlo.
 
-**Es reproducible, y está verificado.** El 2026-09-18 se re-corrió el notebook
+**Es reproducible, y está verificado.** El 2026-09-18 se volvió a correr el notebook
 desde cero en una sesión nueva hasta el Grid Search, y dio los mismos números:
 
 ```
@@ -40,7 +41,7 @@ dtrain: 15876 filas de 179449 posibles
 num_leaves 128 · min_data_in_leaf 64 · num_iterations 716
 ```
 
-Que eso se cumpla no era gratis: ver *El hallazgo* más abajo.
+Que eso se cumpliera no fue gratis: ver *El hallazgo* más abajo.
 
 ### Configuración
 
@@ -60,7 +61,7 @@ Cifras del pipeline: 53 columnas tras el FE intra-mes, **253** tras el FE
 histórico, `dtrain` de **15.876** filas, `dfinal_train` de **192.651**, y 13.242
 clientes en 202109.
 
-Las diez semillas, tomadas en el orden en que estaban registradas de antemano y no
+Mis diez semillas, tomadas en el orden en que estaban registradas de antemano y no
 elegidas por resultado:
 
 ```
@@ -99,8 +100,8 @@ tienen su justificación en `BITACORA.md`; resumidas:
 
 - **#02.** Los grupos se contradicen. Se siguió a B porque midió `rank_cero_fijo`
   ganándole a `estandarizar` —lo que recomienda A— en **10 de 10 semillas**, y
-  porque la implementación de `estandarizar` de la cátedra tiene un bug fatal:
-  `mean(campo)` en vez de `mean(get(campo))` deja **todas** las variables
+  porque en la implementación de `estandarizar` me pareció encontrar un bug:
+  `mean(campo)` en vez de `mean(get(campo))`, eso deja **todas** las variables
   monetarias en `NA`.
 - **#03.** A y B no midieron lo mismo, así que el nulo de A no refuta a B. El
   Experimento 2 de B midió `p = 0.0039` sobre 10 semillas, con la mediana pasando
@@ -121,8 +122,9 @@ y cinco `_rank` del #02.
 
 ## El experimento propio
 
-El PDF §6.15 prohíbe que juntar las conclusiones ajenas *sea* la entrega. Se
-hicieron dos experimentos, y el segundo apareció sin buscarlo.
+El PDF de la cátedra (`UTN_DMEYF_2026.pdf`, §6.15) prohíbe que juntar las
+conclusiones ajenas *sea* la entrega. Se hicieron dos experimentos, y el segundo
+apareció sin buscarlo.
 
 ### 1. El semillerío — resultado **nulo**
 
@@ -215,15 +217,15 @@ sobre ella. Es un desvío declarado respecto del código del Grupo B.
 Public y la entregada 18.64. Se eligió entregar la reproducible: la métrica que se
 sacrifica sale del **30 %** del test y se mueve ±5 puntos por azar —cortes que
 comparten el 95 % de sus predicciones dieron scores separados por 5.2—, mientras
-que la reproducibilidad es, en palabras del PDF, *"parte de la filosofía de la
-materia"*.
+que la reproducibilidad es, en palabras del `UTN_DMEYF_2026.pdf`,
+*"parte de la filosofía de la materia"*.
 
 ---
 
 ## Por qué 950 envíos
 
-La consigna (§5.6) advierte que el submit elegido no debería ser el de mayor
-ganancia Public. Se eligió por robustez, no por pico:
+La consigna (`UTN_DMEYF_2026.pdf`, §5.6) advierte que el submit elegido no
+debería ser el de mayor ganancia Public. Se eligió por robustez, no por pico:
 
 ```
 suavizado con media movil de 3 puntos
